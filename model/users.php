@@ -30,6 +30,13 @@ class Users extends Database
         return $this->db->single();
     }
 
+    public function findById($id) {
+        $query = "SELECT * FROM " . $this->table_name . " WHERE id=:id";
+        $this->db->query($query);
+        $this->db->bind('id', $id);
+        return $this->db->single();
+    }
+
     /**
      * form_data [name,email,password(has)]
     */
@@ -44,7 +51,7 @@ class Users extends Database
         $this->db->bind('created_at', date("Y-m-d H:i:s"));
 
         $res = $this->db->execute();
-        
+
         if ($res) {
             $user_id = $this->db->lastInsertId();
             // Mengambil data yang baru disimpan
