@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery Demo</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:20px}
+    .form{max-width:600px;margin:0 auto}
+    label{display:block;margin-top:12px}
+    input[type=text], textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px}
+    button{margin-top:12px;padding:10px 16px;background:#007bff;color:white;border:none;border-radius:6px}
+    img.preview{max-width:100%;margin-top:12px;border-radius:6px}
+    pre{background:#f6f8fa;padding:12px;border-radius:6px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div class="form">
+    <h2>Gallery Demo (supports Pinterest URL)</h2>
+    <p>Masukkan data galeri. Untuk menggunakan link Pinterest, paste URL pin di field <strong>File URL</strong>.</p>
+    <label>Title
+      <input id="title" type="text" placeholder="Judul" />
+    </label>
+    <label>Deskripsi
+      <textarea id="deskripsi" rows="3" placeholder="Deskripsi"></textarea>
+    </label>
+    <label>File URL (lokal path atau URL Pinterest)
+      <input id="file" type="text" placeholder="https://www.pinterest.com/pin/12345/... or uploads/1.jpg" />
+    </label>
+    <label>Author ID
+      <input id="author_id" type="text" placeholder="user id (angka)" />
+    </label>
+    <button id="submit">Buat Galeri</button>
+
+    <div id="result"></div>
+    <h3>Preview</h3>
+    <div id="preview"></div>
+  </div>
+
+  <script>
+    const submit = document.getElementById('submit');
+    const apiBase = location.origin + location.pathname.replace(/index\.php.*|\/api.*$/, '');
+    // fallback to explicit path if calculation fails
+    const endpoint = '/smkti/gallery-app/backend/api/galleries';
+
+    submit.addEventListener('click', async () => {
+      const title = document.getElementById('title').value.trim();
+      const deskripsi = document.getElementById('deskripsi').value.trim();
+      const file = document.getElementById('file').value.trim();
+      const author_id = document.getElementById('author_id').value.trim();
+
+      if (!title) { alert('Title wajib diisi'); return; }
+
+      const payload = { title, deskripsi };
+      if (file) payload.file = file;
+      if (author_id) payload.author_id = Number(author_id);
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        let json = null;
+        try { json = JSON.parse(text); } catch(e){ json = { raw: text }; }
+
+        document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
+
+        // preview image if available in response data
+        const imgContainer = document.getElementById('preview');
+        imgContainer.innerHTML = '';
+        const data = json && json.data ? json.data : null;
+        let imgUrl = null;
+        if (data) {
+          if (data.file_url) imgUrl = data.file_url;
+          else if (data.file) {
+            if (/^https?:\/\//i.test(data.file)) imgUrl = data.file;
+            else imgUrl = location.origin + '/' + data.file.replace(/^\/+/, '');
+          }
+        } else if (payload.file && /^https?:\/\//i.test(payload.file)) {
+          imgUrl = payload.file; // external, may or may not show due to CORS
+        }
+
+        if (imgUrl) {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          img.className = 'preview';
+          img.alt = title;
+          img.onerror = () => { img.style.opacity = '0.5'; };
+          imgContainer.appendChild(img);
+        }
+
+      } catch (err) {
+        document.getElementById('result').innerHTML = '<pre>' + err.message + '</pre>';
+      }
+    });
+  </script>
+</body>
+</html>
