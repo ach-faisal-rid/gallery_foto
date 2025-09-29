@@ -4,6 +4,7 @@
 
 require_once __DIR__ . '/../config/Route.php';
 require_once __DIR__ .'/controllers/AuthController.php';
+require_once __DIR__ .'/controllers/UsersController.php';
 require_once __DIR__ . '/../model/Users.php';
 require_once __DIR__ . "/AuthMiddleware.php";
 
@@ -25,7 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Determine base URL dynamically so routes work regardless of folder name or host
-$base_url = "/smkti/gallery-app/backend";
+$scriptName = dirname($_SERVER['SCRIPT_NAME']);
+$base_url = rtrim($scriptName, "\\/");
 
 // Register a GET route for /api/registrasi (for testing)
 Route::get($base_url . "/api/registrasi", function () {
@@ -57,5 +59,32 @@ Route::get($base_url . '/api/auth/current', function () {
     $controller->getByToken();
 });
 
+// Users CRUD routes
+Route::get($base_url . '/api/users', function () {
+    $controller = new \controllers\UsersController();
+    $controller->index();
+});
+
+Route::get($base_url . '/api/users/{id}', function ($id) {
+    $controller = new \controllers\UsersController();
+    $controller->show($id);
+});
+
+Route::post($base_url . '/api/users', function () {
+    $controller = new \controllers\UsersController();
+    $controller->create();
+});
+
+Route::put($base_url . '/api/users/{id}', function ($id) {
+    $controller = new \controllers\UsersController();
+    $controller->update($id);
+});
+
+Route::delete($base_url . '/api/users/{id}', function ($id) {
+    $controller = new \controllers\UsersController();
+    $controller->delete($id);
+});
+
 // Run the router
 Route::run();
+

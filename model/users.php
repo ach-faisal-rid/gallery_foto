@@ -66,4 +66,50 @@ class Users extends Database
         }
     }
 
+    // Ambil semua user
+    public function getAll()
+    {
+        $this->db->query("SELECT * FROM $this->table_name");
+        return $this->db->resultSet();
+    }
+
+    // Update user (partial)
+    public function update($id, $data)
+    {
+        $fields = [];
+        $params = [];
+        if (isset($data['name'])) {
+            $fields[] = 'name = :name';
+            $params['name'] = $data['name'];
+        }
+        if (isset($data['email'])) {
+            $fields[] = 'email = :email';
+            $params['email'] = $data['email'];
+        }
+        if (isset($data['password'])) {
+            $fields[] = 'password = :password';
+            $params['password'] = $data['password'];
+        }
+
+        if (empty($fields)) return false;
+
+        $query = "UPDATE $this->table_name SET " . implode(', ', $fields) . " , updated_at = :updated_at WHERE id = :id";
+        $this->db->query($query);
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+        $this->db->bind('updated_at', date('Y-m-d H:i:s'));
+        $this->db->bind('id', $id);
+
+        return $this->db->execute();
+    }
+
+    // Hapus user
+    public function delete($id)
+    {
+        $this->db->query("DELETE FROM $this->table_name WHERE id = :id");
+        $this->db->bind('id', $id);
+        return $this->db->execute();
+    }
+
 }
